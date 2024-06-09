@@ -71,6 +71,16 @@ class ViewController: UIViewController {
         }
     }
     
+    func download(url: String) -> Observable<String?> {
+        // return Observable.just("Hello") // 아래 5줄의 코드를 just 하나로 끝낼 수 있음 (이때, 한 번 밖에 emitt 하지 못함)
+        return Observable.from(["Hello", "World"]) // 배열 안에 있는 요소를 한 번씩 emitt 함 (Hello 한번, World 한번)
+//        return Observable.create() { emitter in
+//            emitter.onNext("Hello")
+//            emitter.onCompleted()
+//            return Disposables.create()
+//        }
+    }
+    
     @IBAction func onLoad() {
         editView.text = ""
         setVisibleWithAnimation(activityIndicator, true)
@@ -78,19 +88,27 @@ class ViewController: UIViewController {
         // 2. Observable로 오는 데이터를 받아서 처리하는 방법
         let observable = downloadJson(url: MEMBER_LIST_URL) // 비동기 코드 실행 전
         
-        let disposable = observable.subscribe { event in // subscribe 오퍼레이터가 호출되면 observable의 비동기 코드 실행
-                switch event {
-                case .next(let json):
-                    DispatchQueue.main.async {
-                        self.editView.text = json
-                        self.setVisibleWithAnimation(self.activityIndicator, false)
-                    }
-                case .error(_):
-                    break
-                case .completed:
-                    break
-                }
-            }
+//        let disposable = observable.subscribe { event in // subscribe 오퍼레이터가 호출되면 observable의 비동기 코드 실행
+//                switch event {
+//                case .next(let json):
+//                    DispatchQueue.main.async {
+//                        self.editView.text = json
+//                        self.setVisibleWithAnimation(self.activityIndicator, false)
+//                    }
+//                case .error(_):
+//                    break
+//                case .completed:
+//                    break
+//                }
+//            }
+        
+        // 위 subscribe 코드를 짧게 끝낼 수 있음
+        let disposable = downloadJson(url: MEMBER_LIST_URL)
+            .observeOn(MainScheduler.instance)
+            .subscribe(onNext: { json in
+                self.editView.text = json
+                self.setVisibleWithAnimation(self.activityIndicator, false)
+            })
         
 //        disposable.dispose() -> 비동기 코드 실행 중간에 취소시킬 수 있음
     }
