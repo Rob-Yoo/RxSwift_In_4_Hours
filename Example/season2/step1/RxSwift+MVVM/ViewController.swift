@@ -15,6 +15,10 @@ let MEMBER_LIST_URL = "https://my.api.mockaroo.com/members_with_avatar.json?key=
 class ViewController: UIViewController {
     @IBOutlet var timerLabel: UILabel!
     @IBOutlet var editView: UITextView!
+    
+//    var disposable = [Disposable]()
+    var disposable = DisposeBag() // 위 Disposable 배열과 viewWillDisappear 메서드에서의 dispose 메서드가 호출된 로직을 한번에 처리해줌
+    // 즉, DiposeBag을 가지고 있는 객체가 사라지면 자동으로 dispose 메서드가 호출된 것과 동일한 동작을 함
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -22,6 +26,12 @@ class ViewController: UIViewController {
             self?.timerLabel.text = "\(Date().timeIntervalSince1970)"
         }
     }
+    
+//    override func viewWillDisappear(_ animated: Bool) {
+//        super.viewWillDisappear(animated)
+//        
+//        disposable.forEach { $0.dispose() } // 뷰가 사라질 때 비동기 작업 모두 취소시킬 수 있음
+//    }
 
     private func setVisibleWithAnimation(_ v: UIView?, _ s: Bool) {
         guard let v = v else { return }
@@ -102,14 +112,28 @@ class ViewController: UIViewController {
 //                }
 //            }
         
+// ----------------------------------------------------------------------
+
         // 위 subscribe 코드를 짧게 끝낼 수 있음
-        let disposable = downloadJson(url: MEMBER_LIST_URL)
+//        let d = downloadJson(url: MEMBER_LIST_URL)
+//            .observeOn(MainScheduler.instance)
+//            .subscribe(onNext: { json in
+//                self.editView.text = json
+//                self.setVisibleWithAnimation(self.activityIndicator, false)
+//            })
+        
+        // d.dispose() -> 비동기 코드 실행 중간에 취소시킬 수 있음
+        // disposable.append(d)
+//        disposable.insert(d) // -> DisposeBag에 넣기
+        
+// ------------------------------------------------------------------------
+        // -> disposable.insert() 코드를 선언형으로 바꿈
+        downloadJson(url: MEMBER_LIST_URL)
             .observeOn(MainScheduler.instance)
             .subscribe(onNext: { json in
                 self.editView.text = json
                 self.setVisibleWithAnimation(self.activityIndicator, false)
             })
-        
-//        disposable.dispose() -> 비동기 코드 실행 중간에 취소시킬 수 있음
+            .disposed(by: disposable)
     }
 }
