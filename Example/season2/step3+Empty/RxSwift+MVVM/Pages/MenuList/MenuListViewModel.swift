@@ -10,9 +10,9 @@ import Foundation
 import RxSwift
 
 // Observable<T> -> Observable 생성(create, just, from) 시 외부에서 값을 변경시킬 수 없다.
-// PublishSubject<T> -> 외부에서 해당 값을 변경 시킬 수 있다.
+// Subject (ex. PublishSubject<T> or BehaviorSubject<T> 등등) -> 외부에서 해당 값을 변경 시킬 수 있다.
 class MenuListViewModel {
-    var menuObservable = PublishSubject<[Menu]>()
+    var menuObservable = BehaviorSubject<[Menu]>(value: [])
     
     lazy var itemsCount = menuObservable.map { $0.map { $0.count }.reduce(0, +) }
     lazy var totalPrice = menuObservable.map { $0.map { $0.price * $0.count }.reduce(0, +) }
