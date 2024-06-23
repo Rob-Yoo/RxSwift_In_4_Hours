@@ -11,6 +11,7 @@ import RxSwift
 import UIKit
 
 class ViewController: UIViewController {
+    var viewModel = ViewModel()
     var disposeBag = DisposeBag()
 
     override func viewDidLoad() {
@@ -29,20 +30,27 @@ class ViewController: UIViewController {
     // MARK: - Bind UI
 
     private func bindUI() {
-        // id input +--> check valid --> bullet
-        //          |
-        //          +--> button enable
-        //          |
-        // pw input +--> check valid --> bullet
-    }
-
-    // MARK: - Logic
-
-    private func checkEmailValid(_ email: String) -> Bool {
-        return email.contains("@") && email.contains(".")
-    }
-
-    private func checkPasswordValid(_ password: String) -> Bool {
-        return password.count > 5
+        
+        // Input 2: 이메일, 비밀번호 유효성 검사
+        idField.rx.text.orEmpty
+            .bind(to: viewModel.emailText)
+            .disposed(by: disposeBag)
+        
+        pwField.rx.text.orEmpty
+            .bind(to: viewModel.pwdText)
+            .disposed(by: disposeBag)
+        
+        // Output 3: 이메일, 비밀번호 유효성 상태 뷰 / 버튼의 enable 상태
+        viewModel.isEmailValid
+            .bind(to: idValidView.rx.isHidden)
+            .disposed(by: disposeBag)
+        
+        viewModel.isPasswordValid
+            .bind(to: pwValidView.rx.isHidden)
+            .disposed(by: disposeBag)
+        
+        Observable.combineLatest(viewModel.isEmailValid, viewModel.isPasswordValid) { $0 && $1 }
+            .bind(to: loginButton.rx.isEnabled)
+            .disposed(by: disposeBag)
     }
 }
